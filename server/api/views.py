@@ -10,7 +10,7 @@ from .models import *
 from bson.json_util import dumps
 import json
 import pymongo
-import datetime
+from datetime import datetime
 import threading
 
 # Create your views here.
@@ -62,7 +62,7 @@ class TrafficAPI(APIView):
                     'size': doc.get('packet_size'),
                 })
             
-            sorted_list = sorted(data_list, key=lambda x: datetime.fromisoformat(x['timestamp']))
+            sorted_list = sorted(data_list, key=lambda x: datetime.fromisoformat(x['time']))
             return JsonResponse(sorted_list, safe=False, status=200)
         else:
             return JsonResponse({'error': 'Invalid request'}, status=400)

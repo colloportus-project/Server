@@ -140,5 +140,3 @@ def start_server():
 
             client_thread.start()
 
-# if __name__ == "__main__":
-#     start_server()
