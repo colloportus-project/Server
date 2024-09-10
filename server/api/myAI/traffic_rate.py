@@ -47,18 +47,25 @@ def evaluate_packet(packet):
 
         # 결과 출력 (source_ip 추가)
         source_ip = packet.get('source_ip', '알 수 없음')  # source_ip를 packet에서 추출
-
-        data = {
-            'ip':source_ip, 
-            'packet_size':packet.get('packet_size'), 
-            'time': packet.get('timestamp'),
-            'tf':if_pred[0].item()
-        }
         
         # MongoDB에 데이터 삽입
         if if_pred[0] == 1:
+            data = {
+                'ip':source_ip, 
+                'packet_size':packet.get('packet_size'), 
+                'time': packet.get('timestamp'),
+                'protocol': packet.get('protocol'),
+                'judge':"정상"
+            }
             traffic_true_db.insert_one(data)
         else:
+            data = {
+                'ip':source_ip, 
+                'packet_size':packet.get('packet_size'), 
+                'time': packet.get('timestamp'),
+                'protocol': packet.get('protocol'),
+                'judge':"비정상"
+            }
             traffic_false_db.insert_one(data)
 
         print(f"Source IP: {source_ip}, Autoencoder MSE: {mse}, Isolation Forest Score: {if_score[0]}, Prediction: {'정상' if if_pred[0] == 1 else '비정상'}")
