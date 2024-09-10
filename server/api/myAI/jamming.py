@@ -8,33 +8,60 @@ import numpy as np
 from datetime import datetime
 import pandas as pd
 import threading
-from ..models import *
+from sklearn.impute import SimpleImputer
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 
 # 모델과 스케일러 로드
 iso_forest, scaler = joblib.load(r'C:\Users\dngur\Desktop\공모전\사이버 시큐리티 해커톤\Server\server\api\myAI\isolation_forest_model_jamming.pkl')
+
+uri = "mongodb+srv://user1:!spwksgo@colloportus.wf3wq.mongodb.net/"
+
+# Create a new client and connect to the server
+client = MongoClient(uri, server_api=ServerApi('1'))
+
+db = client['database']
+jamming_db = db['jamming']
 
 # 서버의 호스트와 포트 설정
 HOST = 'localhost'
 PORT = 49152
 
 # 수신한 데이터를 저장할 리스트 (고정 길이로 유지)
-window_size = 100  # 그래프에 표시할 데이터 포인트 개수
-timestamps = [np.nan] * window_size  # 시간값 저장
-frequencies = [np.nan] * window_size  # 주파수 데이터 저장
-signal_strengths = [np.nan] * window_size  # 신호 강도 데이터 저장
-noise_levels = [np.nan] * window_size  # 잡음 레벨 데이터 저장
-jamming_points = [np.nan] * window_size  # jamming 공격 점을 표시하기 위한 리스트 (비정상 데이터에만 값이 입력됨)
+#window_size = 100  # 그래프에 표시할 데이터 포인트 개수
+#timestamps = [np.nan] * window_size  # 시간값 저장
+#frequencies = [np.nan] * window_size  # 주파수 데이터 저장
+#signal_strengths = [np.nan] * window_size  # 신호 강도 데이터 저장
+#noise_levels = [np.nan] * window_size  # 잡음 레벨 데이터 저장
+#jamming_points = [np.nan] * window_size  # jamming 공격 점을 표시하기 위한 리스트 (비정상 데이터에만 값이 입력됨)
 
 # Lock 객체를 생성하여 쓰레드 간 동시 접근 방지
 lock = threading.Lock()
 
+def handle_missing_values(data):
+    # NaN 값을 0으로 대체 (기본값을 다른 값으로 설정할 수도 있습니다)
+    imputer = SimpleImputer(strategy='mean')  # 또는 strategy='constant', fill_value=0.0
+    data = np.array(data).reshape(-1, 1)  # 2D 배열로 변환
+    data_imputed = imputer.fit_transform(data)
+    return data_imputed.flatten() # 2D 배열을 다시 1D배열로 형변환하여 반환
+
 # 트래픽을 평가하는 함수
 def evaluate_packet(packet):
     try:
-        # 주파수, 신호 강도, 잡음 레벨을 사용하여 데이터 전처리
-        X = np.array([[packet['frequency'], packet['signal_strength'], packet['noise_level']]])  # numpy 배열로 변환
-        print(f"수신된 패킷: {packet}")  # 디버깅: 패킷 수신 여부 확인
-        X_scaled = scaler.transform(X)  # 데이터 스케일링
+        # 패킷에서 데이터 추출 및 결측값 처리
+        frequency = packet.get('frequency', np.nan)
+        signal_strength = packet.get('signal_strength', np.nan)
+        noise_level = packet.get('noise_level', np.nan)
+
+        # 결측값 처리
+        handle_data = handle_missing_values([frequency, signal_strength, noise_level])
+
+        # 데이터 전처리
+        X = np.array([handle_data])
+        #print(f"수신된 패킷: {packet}")  # 디버깅: 패킷 수신 여부 확인
+        
+        # 데이터 스케일링
+        X_scaled = scaler.transform(X)
 
         # Isolation Forest 모델로 예측
         prediction = iso_forest.predict(X_scaled)[0]  # 예측 결과 (1: 정상, -1: jamming)
@@ -42,32 +69,27 @@ def evaluate_packet(packet):
         # Lock을 사용하여 쓰레드 동기화
         with lock:
             # 기존 데이터를 한 칸씩 왼쪽으로 이동
-            timestamps.pop(0)
-            frequencies.pop(0)
-            signal_strengths.pop(0)
-            noise_levels.pop(0)
-            jamming_points.pop(0)
+            #timestamps.pop(0)
+            #frequencies.pop(0)
+            #signal_strengths.pop(0)
+            #noise_levels.pop(0)
+            #jamming_points.pop(0)
 
             # 새 데이터를 추가
-            timestamps.append(datetime.strptime(packet['timestamp'], '%Y-%m-%d %H:%M:%S'))  # timestamp 추가
-            frequencies.append(packet['frequency'])
-            signal_strengths.append(packet['signal_strength'])
-            noise_levels.append(packet['noise_level'])
-
-            # 예측 결과에 따라 jamming 공격인 경우에만 jamming_points에 값 입력
-            if prediction == 1:
-                jamming_points.append(np.nan)  # 정상 데이터는 jamming_points에 nan 입력
-            else:
-                jamming_points.append(packet['noise_level'])  # jamming 공격은 빨간색 점으로 표시
-
+            #timestamps.append(datetime.strptime(packet['timestamp'], '%Y-%m-%d %H:%M:%S'))  # timestamp 추가
+            #frequencies.append(handle_data[0])
+            #signal_strengths.append(handle_data[1])
+            #noise_levels.append(handle_data[2])
+            timestamp = datetime.strptime(packet['timestamp'], '%Y-%m-%d %H:%M:%S')
+            
             data = {
-                'timestamp':timestamps[0],
-                'frequency': frequencies[0],
-                'signal_strength': signal_strengths[0],
-                'noise_level': noise_levels[0],
-                'prediction': prediction # 1,-1
+                'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'frequency': float(handle_data[0]),
+                'signal_strength': float(handle_data[1]),
+                'noise_level': float(handle_data[2]),
+                'prediction': prediction.item() # 1,-1
             }
-
+            print("저장할 데이터:", data)
             jamming_db.insert_one(data)
 
     except Exception as e:
@@ -143,17 +165,17 @@ def receive_and_evaluate():
         except Exception as e:
             print(f"오류 발생: {e}")
 
-# 실시간 트래픽 수신 및 평가 시작
-# if __name__ == "__main__":
-#     # 실시간 플롯 설정
-#     fig, ax = plt.subplots(figsize=(10, 6))
+#실시간 트래픽 수신 및 평가 시작
+if __name__ == "__main__":
+    # 실시간 플롯 설정
+    #fig, ax = plt.subplots(figsize=(10, 6))
 
-#     # 그래프를 주기적으로 갱신하는 함수 (애니메이션)
-#     anim = FuncAnimation(fig, update_graph, interval=1000, blit=False)  # 애니메이션 객체를 anim 변수에 할당
+    # 그래프를 주기적으로 갱신하는 함수 (애니메이션)
+    #anim = FuncAnimation(fig, update_graph, interval=1000, blit=False)  # 애니메이션 객체를 anim 변수에 할당
 
-#     # 데이터 수신 및 평가 시작
-#     receive_thread = threading.Thread(target=receive_and_evaluate)
-#     receive_thread.start()
+    # 데이터 수신 및 평가 시작
+    receive_thread = threading.Thread(target=receive_and_evaluate)
+    receive_thread.start()
 
-#     # 실시간 그래프 유지
-#     plt.show()
+    # 실시간 그래프 유지
+    # plt.show()
