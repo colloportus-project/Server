@@ -85,7 +85,7 @@ def handle_client1(conn, addr):
             print(f"클라이언트1로 네트워크 트래픽이 전송되었습니다: {packet['source_ip']}")
 
             # 1초 대기
-            time.sleep(3)
+            time.sleep(1)
     except ConnectionResetError:
         print(f"클라이언트1: {addr}와의 연결이 종료되었습니다.")
     finally:
@@ -110,7 +110,7 @@ def handle_client2(conn, addr):
             print(f"클라이언트2로 VSAT 주파수가 전송되었습니다: {packet['frequency']} GHz")
 
             # 1초 대기
-            time.sleep(5)
+            time.sleep(2)
     except ConnectionResetError:
         print(f"클라이언트2: {addr}와의 연결이 종료되었습니다.")
     finally:

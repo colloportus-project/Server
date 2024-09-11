@@ -13,14 +13,13 @@ from datetime import datetime
 def main(request):
     traffic_gen.start_server()
 
-    return HttpResponse("<h1>Hello~</h1>")
-
 class JammingAPI(APIView):
     def get(self, request):
         if request.headers.get('Accept') == 'application/json':
-            documents = jamming_db.find()
+            true_documents = jamming_true_db.find()
+            false_documents = jamming_false_db.find()
             data_list = []
-            for doc in documents:
+            for doc in true_documents:
                 data_list.append({
                     '_id': str(doc.get('_id')),  # ObjectId를 문자열로 변환
                     'timestamp':doc.get('timestamp'),
@@ -29,7 +28,20 @@ class JammingAPI(APIView):
                     'noise_level': doc.get('noise_level'),
                     'prediction': doc.get('prediction') # 1,-1
                 })
-            data = data_list
+            
+            for doc in false_documents:
+                data_list.append({
+                    '_id': str(doc.get('_id')),  # ObjectId를 문자열로 변환
+                    'timestamp':doc.get('timestamp'),
+                    'frequency': doc.get('frequency'),
+                    'signal_strength': doc.get('signal_strength'),
+                    'noise_level': doc.get('noise_level'),
+                    'prediction': doc.get('prediction') # 1,-1
+                })
+            
+            sorted_list = sorted(data_list, key=lambda x: datetime.fromisoformat(x['timestamp']))
+        
+            data = sorted_list
             return JsonResponse(data, safe=False, status=200)
         else:
             return JsonResponse({'error': 'Invalid request'}, status=400)
@@ -96,12 +108,21 @@ class WarningAPI(APIView):
         # result에 따라 적절한 응답 반환
         if result == 0:
             return JsonResponse({'message': 'No abnormal IP found', 'result': result}, status=200) # 이걸 프론트에서 받아올 수 있음.
-        elif result == 1:
+        elif result == 2:
             return JsonResponse({'message': 'IP access successfully', 'result': result}, status=200)
         else:
             return JsonResponse({'message': 'IP block successfully', 'result':result}, status=200)
 
+class HandleAPI(APIView):
+    def get(self, request):
+        cursor = jamming_handle_db.find()  # 모든 문서 조회
 
-    
+        # Cursor 객체에서 데이터를 리스트로 변환
+        documents = list(cursor)
+
+        # 데이터를 JSON으로 직렬화
+        data = json.dumps(documents, default=str)  # ObjectId 같은 비직렬화 가능한 데이터 처리
+
+        return JsonResponse(data, safe=False, status=200)
 
     
