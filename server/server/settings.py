@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-hxzx^3@1(us96!-^8&o_q4*b*-f$-u%36vmopfs*+%dc55!0ce
 DEBUG = True
 
 # 할때마다 바꾸기
-ALLOWED_HOSTS = ['246e-115-92-127-144.ngrok-free.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['19bd-115-92-127-144.ngrok-free.app', 'localhost', '127.0.0.1']
 
 # Application definition
 
@@ -62,7 +62,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:8000', 
-    'https://246e-115-92-127-144.ngrok-free.app'
+    'https://19bd-115-92-127-144.ngrok-free.app'
 ]
 
 CORS_ALLOW_CREDENTIALS = True

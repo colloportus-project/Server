@@ -18,7 +18,9 @@ uri = "mongodb+srv://user1:!spwksgo@colloportus.wf3wq.mongodb.net/"
 client = MongoClient(uri, server_api=ServerApi('1'))
 
 db = client['database']
-jamming_db = db['jamming']
+jamming_true_db = db['jamming_true']
+jamming_false_db = db['jamming_false']
+jamming_handle_db = db['jamming_handle']
 
 # 서버의 호스트와 포트 설정
 HOST = 'localhost'
@@ -66,8 +68,15 @@ def evaluate_packet(packet):
                 'noise_level': float(handle_data[2]),
                 'prediction': prediction.item() # 1,-1
             }
+
+            if prediction == 1:
+                jamming_true_db.insert_one(data)
+            else:
+                handle_jamming_attack(data)
+                jamming_false_db.insert_one(data)
+
+            print(f"{data['timestamp']} - 정상 통신 중")
             print("저장할 데이터:", data)
-            jamming_db.insert_one(data)
 
     except Exception as e:
         print(f"패킷 평가 중 오류 발생: {e}")
@@ -103,6 +112,48 @@ def receive_and_evaluate():
             print(f"서버에 연결할 수 없습니다: {HOST}:{PORT}")
         except Exception as e:
             print(f"오류 발생: {e}")
+
+# jamming attack handle
+def handle_jamming_attack(data):
+    noise_threshold = 3.0  # 노이즈 임계값
+    signal_threshold = 40.0  # 신호 강도 임계값
+    new_noise = 0
+    new_signal_power = 0
+    new_backup = 0
+
+    print(f"{data['timestamp']} - 재밍 공격 감지: 노이즈 {data['noise_level']} dB")
+    # 노이즈 변경 - 10 나누기
+    new_noise = change_frequency(data['noise_level'])
+    print(f"새 주파수: {new_noise} MHz로 변경")
+            
+    # 신호 강도 조정 - 20 더하기
+    if data['signal_strength'] < signal_threshold:
+        new_signal_power = adjust_signal_power(data['signal_strength'])
+        print(f"신호 강도 증가: {new_signal_power} dBm")
+    else:
+        print("신호 강도 정상")
+
+    # 백업 경로 활성화 조건
+    if data['noise_level'] > noise_threshold and data['signal_strength'] < signal_threshold:
+        print("지속적인 재밍 공격! 백업 경로 활성화.")
+        new_backup = activate_backup_route() # 1이면 백업 됨
+    insert_data = {
+        'noise': new_noise,
+        'signal_power': new_signal_power,
+        'backup': new_backup 
+    }
+    jamming_handle_db.insert_one(insert_data)
+
+def activate_backup_route():
+    print("백업 경로가 활성화되었습니다.")
+    return 1
+
+def change_frequency(data):
+    return float(data/10)
+
+def adjust_signal_power(data):
+    return float(data+20)
+
 
 #실시간 트래픽 수신 및 평가 시작
 if __name__ == "__main__":
