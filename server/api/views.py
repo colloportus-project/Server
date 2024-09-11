@@ -48,6 +48,7 @@ class TrafficAPI(APIView):
                     'judge': doc.get('judge'),
                     'time': doc.get('time'),
                     'size': doc.get('packet_size'),
+                    'protocol': doc.get('protocol')
                 })
             
             for doc in false_documents:
@@ -57,6 +58,7 @@ class TrafficAPI(APIView):
                     'judge': doc.get('judge'),
                     'time': doc.get('time'),
                     'size': doc.get('packet_size'),
+                    'protocol': doc.get('protocol')
                 })
             
             sorted_list = sorted(data_list, key=lambda x: datetime.fromisoformat(x['time']))
@@ -71,9 +73,15 @@ class WarningAPI(APIView):
     
     # post에서는 각 동작에 대한 판단을 해줘야 함.
     def post(self, request):
+        result = 0
         try:
             # 요청 본문을 JSON으로 파싱
             data = json.loads(request.body)
+            if data["action"] == "accept":
+                result = ip_block.accept_ip(data["ip"])
+            else:
+                result = ip_block.block_ip(data["ip"])
+
         except json.JSONDecodeError:
             # JSON 파싱 실패 시 에러 응답 반환
             return JsonResponse({'error': 'Invalid JSON format'}, status=400)
@@ -85,17 +93,14 @@ class WarningAPI(APIView):
         if not ip:
             return JsonResponse({'error': 'IP address not provided'}, status=400)
 
-        # IP와 관련된 작업 수행
-        try:
-            result = ip_block.get_latest_abnormal_ip(ip)  # 리턴 값을 확인
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-
+        
         # result에 따라 적절한 응답 반환
-        if result:
-            return JsonResponse({'message': 'IP processed successfully', 'result': result}, status=200)
+        if result == 1:
+            return JsonResponse({'message': 'IP access successfully', 'result': result}, status=200)
+        elif result == 0:
+            return JsonResponse({'message': 'No abnormal IP found', 'result': result}, status=200) # 이걸 프론트에서 받아올 수 있음.
         else:
-            return JsonResponse({'message': 'No abnormal IP found'}, status=200) # 이걸 프론트에서 받아올 수 있음.
+            return JsonResponse({'message': 'IP block successfully', 'result':result}, status=200)
 
 
     
