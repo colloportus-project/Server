@@ -8,7 +8,6 @@ from bson.json_util import dumps
 import json
 import pymongo
 from datetime import datetime
-import threading
 
 # Create your views here.
 def main(request):
@@ -95,10 +94,10 @@ class WarningAPI(APIView):
 
         
         # result에 따라 적절한 응답 반환
-        if result == 1:
-            return JsonResponse({'message': 'IP access successfully', 'result': result}, status=200)
-        elif result == 0:
+        if result == 0:
             return JsonResponse({'message': 'No abnormal IP found', 'result': result}, status=200) # 이걸 프론트에서 받아올 수 있음.
+        elif result == 1:
+            return JsonResponse({'message': 'IP access successfully', 'result': result}, status=200)
         else:
             return JsonResponse({'message': 'IP block successfully', 'result':result}, status=200)
 

@@ -1,3 +1,4 @@
+import sys
 import json
 import joblib
 import numpy as np
@@ -7,6 +8,7 @@ import pandas as pd
 import pymongo
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+from django.http import JsonResponse, HttpResponseForbidden
 
 # 모델 로드
 autoencoder = joblib.load(r'C:\Users\dngur\Desktop\공모전\사이버 시큐리티 해커톤\Server\server\api\myAI\autoencoder_model_real.pkl')
@@ -48,6 +50,11 @@ def evaluate_packet(packet):
         # 결과 출력 (source_ip 추가)
         source_ip = packet.get('source_ip', '알 수 없음')  # source_ip를 packet에서 추출
         
+        # 비정상 db에 있는지 확인 후 있다면 바로 차단
+        if traffic_false_db.find_one({'ip': source_ip}):
+            print("BLOCK!!!!")
+            sys.exit(0)
+            
         # MongoDB에 데이터 삽입
         if if_pred[0] == 1:
             data = {

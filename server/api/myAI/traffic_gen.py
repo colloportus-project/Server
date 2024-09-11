@@ -85,7 +85,7 @@ def handle_client1(conn, addr):
             print(f"클라이언트1로 네트워크 트래픽이 전송되었습니다: {packet['source_ip']}")
 
             # 1초 대기
-            time.sleep(5)
+            time.sleep(3)
     except ConnectionResetError:
         print(f"클라이언트1: {addr}와의 연결이 종료되었습니다.")
     finally:
