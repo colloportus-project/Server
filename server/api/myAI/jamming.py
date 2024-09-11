@@ -124,11 +124,13 @@ def handle_jamming_attack(data):
     print(f"{data['timestamp']} - 재밍 공격 감지: 노이즈 {data['noise_level']} dB")
     # 노이즈 변경 - 10 나누기
     new_noise = change_frequency(data['noise_level'])
+    print(type(new_noise))
     print(f"새 주파수: {new_noise} MHz로 변경")
             
     # 신호 강도 조정 - 20 더하기
     if data['signal_strength'] < signal_threshold:
         new_signal_power = adjust_signal_power(data['signal_strength'])
+        print(type(new_signal_power))
         print(f"신호 강도 증가: {new_signal_power} dBm")
     else:
         print("신호 강도 정상")
@@ -137,7 +139,10 @@ def handle_jamming_attack(data):
     if data['noise_level'] > noise_threshold and data['signal_strength'] < signal_threshold:
         print("지속적인 재밍 공격! 백업 경로 활성화.")
         new_backup = activate_backup_route() # 1이면 백업 됨
+        print(type(new_backup))
+
     insert_data = {
+        'time': data['timestamp'],
         'noise': new_noise,
         'signal_power': new_signal_power,
         'backup': new_backup 
