@@ -10,7 +10,7 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
 # 모델과 스케일러 로드
-iso_forest, scaler = joblib.load(r'C:\Users\dngur\Desktop\공모전\사이버 시큐리티 해커톤\Server\server\api\myAI\isolation_forest_model_jamming.pkl')
+iso_forest, scaler = joblib.load(r'C:\Users\dngur\Desktop\공모전\사이버 시큐리티 해커톤-최우수상!!\Server\server\api\myAI\isolation_forest_model_jamming.pkl')
 
 uri = "mongodb+srv://user1:!spwksgo@colloportus.wf3wq.mongodb.net/"
 

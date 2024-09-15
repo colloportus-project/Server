@@ -11,9 +11,9 @@ from pymongo.server_api import ServerApi
 from django.http import JsonResponse, HttpResponseForbidden
 
 # 모델 로드
-autoencoder = joblib.load(r'C:\Users\dngur\Desktop\공모전\사이버 시큐리티 해커톤\Server\server\api\myAI\autoencoder_model_real.pkl')
-isolation_forest = joblib.load(r'C:\Users\dngur\Desktop\공모전\사이버 시큐리티 해커톤\Server\server\api\myAI\isolation_forest_model_real.pkl')
-scaler = joblib.load(r'C:\Users\dngur\Desktop\공모전\사이버 시큐리티 해커톤\Server\server\api\myAI\scaler_real.pkl')
+autoencoder = joblib.load(r'C:\Users\dngur\Desktop\공모전\사이버 시큐리티 해커톤-최우수상!!\Server\server\api\myAI\autoencoder_model_real.pkl')
+isolation_forest = joblib.load(r'C:\Users\dngur\Desktop\공모전\사이버 시큐리티 해커톤-최우수상!!\Server\server\api\myAI\isolation_forest_model_real.pkl')
+scaler = joblib.load(r'C:\Users\dngur\Desktop\공모전\사이버 시큐리티 해커톤-최우수상!!\Server\server\api\myAI\scaler_real.pkl')
 
 uri = "mongodb+srv://user1:!spwksgo@colloportus.wf3wq.mongodb.net/"
 
